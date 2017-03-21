@@ -23,23 +23,21 @@ namespace Test
             using (var server = CreateServer())
             {
                 for (int i = 0; i <= 20; i++) {
-                    Get(server, "/");
+                    GetAsync(server, "/");
                 }
             }
         }
 
 
         [Fact]
-        public void TestHomePageParallel()
+        public async Task TestHomePageParallelAsnyc()
         {
-            int i=0;
             using (var server = CreateServer())
             {
-                Parallel.For((long) 0, 10, index =>
-                {
-                    i++;
-                    Get(server, "/" + i);
-                });
+                var tasks = Enumerable.Range(1, 10).Select(i => 
+                    GetAsync(server, "/" + i));
+
+                await Task.WhenAll(tasks);
             }
         }
 
@@ -60,7 +58,7 @@ namespace Test
         }
 
 
-        public void Get(TestServer server, string url)
+        private async Task GetAsync(TestServer server, string url)
         {
             using (var client = server.CreateClient())
             {
@@ -71,7 +69,7 @@ namespace Test
                     RequestUri = new Uri(url, UriKind.Relative)
                 };
                 Debug.WriteLine("### Getting:" + url);
-                var resp = client.SendAsync(req).Result;
+                var resp = await client.SendAsync(req);
                 resp.Dispose();
                 Debug.WriteLine("### Done Getting:" + url);
             }
